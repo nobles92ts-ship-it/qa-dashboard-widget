@@ -1,0 +1,12 @@
+{
+  "milestone": "N차",
+  "spreadsheetId": "여기에_스프레드시트_ID",
+  "tcSheetUrl": "https://docs.google.com/spreadsheets/d/여기에_스프레드시트_ID/edit",
+  "reportUrl": "https://qa-report-deploy-phi.vercel.app/N차/",
+  "jiraSprintName": "(DX Bug) N차 스프린트",
+  "statusFile": "qa_status_N차.json",
+  "slackChannel": "C0AH0FERQRY",
+  "vercelScope": "nobles92ts-7686s-projects",
+  "deployDir": "C:/Users/YOUR_NAME/Downloads/qa-report-deploy",
+  "htmlTemplate": "C:/Users/YOUR_NAME/Downloads/QA_결과서/QA_테스트_결과서_N차_template.html"
+}

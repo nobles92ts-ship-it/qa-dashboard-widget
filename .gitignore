@@ -1,0 +1,17 @@
+# Google OAuth 인증 파일 (절대 커밋 금지)
+credentials/client_secret.json
+credentials/oauth_token.json
+
+# Slack / Jira / Vercel 개인 토큰 (절대 커밋 금지)
+scripts/slack_config.json
+scripts/jira_config.json
+scripts/vercel_config.json
+
+# 위젯 런타임 상태 파일
+scripts/qa_status_*.json
+scripts/qa_opinion.txt
+
+# OS / 에디터
+.DS_Store
+Thumbs.db
+desktop.ini
