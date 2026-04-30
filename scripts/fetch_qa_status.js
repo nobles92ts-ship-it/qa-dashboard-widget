@@ -86,7 +86,7 @@ async function fetchSprintIssues(sprintName) {
 
 const SPREADSHEET_ID = milestoneConfig?.spreadsheetId || '1-ICt7w5haohb4S1r3cwX7Z8ZY1tnYCQ6Xawysaocl3E';
 const STATUS_FILENAME = milestoneConfig?.statusFile || 'qa_status.json';
-const OUTPUT_PATH = path.join(__dirname, '..', STATUS_FILENAME);
+const OUTPUT_PATH = path.join(__dirname, STATUS_FILENAME);
 
 // 대시보드, 템플릿 등 제외할 시트명
 const EXCLUDE = ['대시보드', '템플릿', 'Template', 'Sheet1',

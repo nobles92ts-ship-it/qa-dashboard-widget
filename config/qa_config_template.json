@@ -4,6 +4,7 @@
   "tcSheetUrl": "https://docs.google.com/spreadsheets/d/여기에_스프레드시트_ID/edit",
   "reportUrl": "https://qa-report-deploy-phi.vercel.app/N차/",
   "jiraSprintName": "(DX Bug) N차 스프린트",
+  "scriptDir": "C:/Users/YOUR_NAME/Downloads/YOUR_PROJECT/scripts/util",
   "statusFile": "qa_status_N차.json",
   "slackChannel": "C0AH0FERQRY",
   "vercelScope": "nobles92ts-7686s-projects",

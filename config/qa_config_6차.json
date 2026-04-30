@@ -4,6 +4,7 @@
   "tcSheetUrl": "https://docs.google.com/spreadsheets/d/1Wg9569P2nNkDauWkw0kMnxzDTmEO5OBcpilr2KA-NXs/edit",
   "reportUrl": "https://qa-report-deploy-phi.vercel.app/6차/",
   "jiraSprintName": "(DX Bug) 6차 스프린트",
+  "scriptDir": "C:/Users/YOUR_NAME/Downloads/YOUR_PROJECT/scripts/util",
   "statusFile": "qa_status_6차.json",
   "slackChannel": "C0AH0FERQRY",
   "vercelScope": "nobles92ts-7686s-projects",

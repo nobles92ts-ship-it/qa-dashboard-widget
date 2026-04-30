@@ -5,10 +5,6 @@
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-# ── 설정 ──
-$scriptDir = if ($cfg.scriptDir) { $cfg.scriptDir } else { Join-Path $PSScriptRoot "scripts" }
-$refreshMin = 5
-
 # ── Config 로드 ──
 $configPath = Join-Path $PSScriptRoot "config\$ConfigFile"
 $configFullPath = $configPath  # node 스크립트에 전체 경로 전달용
@@ -23,6 +19,10 @@ if (Test-Path $configPath) {
         statusFile = "qa_status_6차.json"
     }
 }
+
+# ── 설정 (config 로드 후) ──
+$scriptDir = if ($cfg.scriptDir) { $cfg.scriptDir } else { Join-Path $PSScriptRoot "scripts" }
+$refreshMin = 5
 
 $statusFile = Join-Path $scriptDir $cfg.statusFile
 
@@ -343,13 +343,7 @@ $btnDeploy.Add_Click({
     $form.Refresh()
     $deployDir = $cfg.deployDir
     $scope = $cfg.vercelScope
-    $vercelConfigFile = Join-Path $scriptDir "vercel_config.json"
-    $vercelToken = ""
-    if (Test-Path $vercelConfigFile) {
-        $vercelToken = (Get-Content $vercelConfigFile -Raw | ConvertFrom-Json).token
-    }
-    $tokenFlag = if ($vercelToken) { "--token $vercelToken" } else { "" }
-    Start-Process "cmd" "/c cd /d $scriptDir && node update_report.js --config `"$configFullPath`" && cd /d $deployDir && vercel deploy --prod --yes --scope $scope $tokenFlag && echo. && echo [완료] 배포 성공! && timeout /t 3" -WindowStyle Normal
+    Start-Process "cmd" "/c cd /d $scriptDir && node update_report.js --config `"$configFullPath`" && cd /d $deployDir && vercel deploy --prod --yes --scope $scope && echo. && echo [완료] 배포 성공! && timeout /t 3" -WindowStyle Normal
     $btnDeploy.Text = "리포트 최신화"
     $btnDeploy.Enabled = $true
 })
@@ -421,7 +415,7 @@ function Update-QAData {
     try {
         $psi = New-Object System.Diagnostics.ProcessStartInfo
         $psi.FileName = "cmd.exe"
-        $psi.Arguments = "/c node fetch_qa_status.js --config `"$configFullPath`""
+        $psi.Arguments = "/c node fetch_qa_status.js --config `"$ConfigFile`""
         $psi.WorkingDirectory = $scriptDir
         $psi.CreateNoWindow = $true
         $psi.UseShellExecute = $false
