@@ -270,9 +270,13 @@ if (fs.existsSync(opinionPath)) {
 // 푸터 날짜
 html = html.replace(/DEXAR QA Team[^<]*/, `DEXAR QA Team &nbsp;|&nbsp; ${today}`);
 
-// 저장
+// 저장: htmlTemplate 위치(dirname) 우선, 없으면 fallback. 폴더 없으면 자동 생성.
 const outputName = `QA_테스트_결과서_${today.replace(/\./g, '')}.html`;
-const outputPath = path.join(milestoneConfig?.htmlTemplate ? path.dirname(milestoneConfig.htmlTemplate) : path.join(__dirname, '..', 'QA_결과서'), outputName);
+const outputDir = milestoneConfig?.htmlTemplate
+  ? path.dirname(milestoneConfig.htmlTemplate)
+  : path.join(__dirname, '..', 'QA_결과서');
+if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+const outputPath = path.join(outputDir, outputName);
 fs.writeFileSync(outputPath, html, 'utf-8');
 
 // deploy 폴더에 마일스톤 서브디렉토리로 복사
