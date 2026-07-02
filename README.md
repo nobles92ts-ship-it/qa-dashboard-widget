@@ -68,22 +68,30 @@ node scripts/google_auth.js
 ```
 브라우저에서 Google 로그인 후 완료. 이후 자동 인증.
 
-### 6단계: 위젯 실행
+### 6단계: 위젯 실행 (5·6·7차 중 선택)
 
+원하는 차수를 `-ConfigFile` 로 지정해 실행합니다 (미지정 시 6차).
 ```powershell
-powershell -ExecutionPolicy Bypass -File qa-widget.ps1
+powershell -ExecutionPolicy Bypass -File qa-widget.ps1 -ConfigFile qa_config_5차.json   # 5차
+powershell -ExecutionPolicy Bypass -File qa-widget.ps1 -ConfigFile qa_config_6차.json   # 6차 (기본)
+powershell -ExecutionPolicy Bypass -File qa-widget.ps1 -ConfigFile qa_config_7차.json   # 7차
 ```
+
+**바탕화면 바로가기로 설치 (권장):** 아래를 한 번 실행하면 `5차 위젯`·`6차 위젯`·`7차 위젯` 바로가기가 바탕화면에 생기고, 이후 원하는 차수를 더블클릭만 하면 됩니다.
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/create_shortcut.ps1
+```
+> ⚠ 각 차수 구글 시트의 열람 권한이 본인 계정에 있어야 데이터가 표시됩니다.
 
 ---
 
-## 새 차수 추가 (7차, 8차...)
+## 새 차수 추가 (8차 이후)
 
-1. `config/qa_config_template.json` 복사 → `config/qa_config_7차.json`
-2. 내용 수정 (milestone, spreadsheetId, reportUrl, jiraSprintName, statusFile, 로컬 경로)
-3. 위젯 실행 시 파라미터 변경:
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File qa-widget.ps1 -ConfigFile qa_config_7차.json
-   ```
+현재 **5·6·7차** config가 포함돼 있습니다. 새 차수는:
+
+1. `config/qa_config_template.json` 복사 → `config/qa_config_8차.json`
+2. 내용 수정 (milestone, spreadsheetId, reportUrl, jiraSprintName, statusFile, 로컬 경로). **`scriptDir` 는 넣지 마세요** — 없으면 레포 내 `scripts/` 를 자동 사용합니다.
+3. `tools/create_shortcut.ps1` 재실행 → `8차 위젯` 바로가기 자동 생성 (또는 `-ConfigFile qa_config_8차.json` 로 직접 실행)
 
 ---
 
@@ -94,6 +102,7 @@ qa-dashboard-widget/
 ├── qa-widget.ps1           # 위젯 본체
 ├── setup.ps1               # 팀원 셋업 확인 스크립트
 ├── config/
+│   ├── qa_config_5차.json  # 5차 설정
 │   ├── qa_config_6차.json  # 6차 설정
 │   ├── qa_config_7차.json  # 7차 설정
 │   └── qa_config_template.json  # 새 차수 템플릿

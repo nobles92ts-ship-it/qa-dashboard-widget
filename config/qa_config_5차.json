@@ -1,0 +1,12 @@
+{
+  "milestone": "5차",
+  "spreadsheetId": "1-ICt7w5haohb4S1r3cwX7Z8ZY1tnYCQ6Xawysaocl3E",
+  "tcSheetUrl": "https://docs.google.com/spreadsheets/d/1-ICt7w5haohb4S1r3cwX7Z8ZY1tnYCQ6Xawysaocl3E/edit",
+  "reportUrl": "https://qa-report-deploy-phi.vercel.app/5차/",
+  "jiraSprintName": "(DX Bug) 5차 스프린트",
+  "statusFile": "qa_status_5차.json",
+  "slackChannel": "C0AH0FERQRY",
+  "vercelScope": "nobles92ts-7686s-projects",
+  "deployDir": "C:/Users/YOUR_NAME/Downloads/qa-report-deploy",
+  "htmlTemplate": "C:/Users/YOUR_NAME/Downloads/QA_결과서/QA_테스트_결과서_5차_template.html"
+}
