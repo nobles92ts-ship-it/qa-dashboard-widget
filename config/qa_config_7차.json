@@ -1,0 +1,12 @@
+{
+  "milestone": "7차",
+  "spreadsheetId": "1ayzXYi4VuxRsUSylg64Yzp7P_75Wzr0aXH372AUgBr4",
+  "tcSheetUrl": "https://docs.google.com/spreadsheets/d/1ayzXYi4VuxRsUSylg64Yzp7P_75Wzr0aXH372AUgBr4/edit",
+  "reportUrl": "https://qa-report-deploy-phi.vercel.app/7차/",
+  "jiraSprintName": "(DX Bug) 7차 스프린트",
+  "statusFile": "qa_status_7차.json",
+  "slackChannel": "C0AH0FERQRY",
+  "vercelScope": "nobles92ts-7686s-projects",
+  "deployDir": "C:/Users/YOUR_NAME/Downloads/qa-report-deploy",
+  "htmlTemplate": "C:/Users/YOUR_NAME/Downloads/QA_결과서/QA_테스트_결과서_5차_template.html"
+}

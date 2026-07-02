@@ -95,6 +95,7 @@ qa-dashboard-widget/
 ├── setup.ps1               # 팀원 셋업 확인 스크립트
 ├── config/
 │   ├── qa_config_6차.json  # 6차 설정
+│   ├── qa_config_7차.json  # 7차 설정
 │   └── qa_config_template.json  # 새 차수 템플릿
 ├── scripts/
 │   ├── fetch_qa_status.js  # TC 데이터 조회
