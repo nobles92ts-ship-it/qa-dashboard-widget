@@ -53,13 +53,14 @@
 "htmlTemplate": "C:/Users/본인이름/Downloads/QA_결과서/QA_테스트_결과서_5차_template.html"
 ```
 
-### 4단계: 셋업 확인
+### 4단계: 셋업 + 차수 선택 + 실행
 
-PowerShell에서 실행:
+PowerShell에서 `setup.ps1` 을 실행하면 **어떤 차수(5·6·7)를 설정할지 먼저 물어봅니다.**
 ```powershell
 powershell -ExecutionPolicy Bypass -File setup.ps1
 ```
-모든 항목이 OK가 될 때까지 안내에 따라 설정하세요.
+번호로 차수를 고르면 → 환경 점검 → 바탕화면에 `N차 위젯` 바로가기 생성 → 바로 실행할지 물어봅니다.
+> 점검 중 "oauth_token.json 없음" 이 뜨면 아래 5단계(최초 인증)를 먼저 하고 `setup.ps1` 을 다시 실행하세요.
 
 ### 5단계: Google 최초 인증 (최초 1회만)
 
@@ -68,16 +69,18 @@ node scripts/google_auth.js
 ```
 브라우저에서 Google 로그인 후 완료. 이후 자동 인증.
 
-### 6단계: 위젯 실행 (5·6·7차 중 선택)
+### (참고) 수동 실행 · 여러 차수 한꺼번에
 
-원하는 차수를 `-ConfigFile` 로 지정해 실행합니다 (미지정 시 6차).
+4단계 `setup.ps1` 이 선택한 차수의 바로가기를 만들어 주지만, 직접 실행하거나 여러 차수 바로가기를 한 번에 만들 수도 있습니다.
+
+특정 차수를 바로 실행:
 ```powershell
 powershell -ExecutionPolicy Bypass -File qa-widget.ps1 -ConfigFile qa_config_5차.json   # 5차
-powershell -ExecutionPolicy Bypass -File qa-widget.ps1 -ConfigFile qa_config_6차.json   # 6차 (기본)
+powershell -ExecutionPolicy Bypass -File qa-widget.ps1 -ConfigFile qa_config_6차.json   # 6차
 powershell -ExecutionPolicy Bypass -File qa-widget.ps1 -ConfigFile qa_config_7차.json   # 7차
 ```
 
-**바탕화면 바로가기로 설치 (권장):** 아래를 한 번 실행하면 `5차 위젯`·`6차 위젯`·`7차 위젯` 바로가기가 바탕화면에 생기고, 이후 원하는 차수를 더블클릭만 하면 됩니다.
+5·6·7차 바로가기를 **한 번에 전부** 만들기:
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools/create_shortcut.ps1
 ```
