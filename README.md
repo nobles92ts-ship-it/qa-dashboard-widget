@@ -103,7 +103,8 @@ powershell -ExecutionPolicy Bypass -File tools/create_shortcut.ps1
 ```
 qa-dashboard-widget/
 ├── qa-widget.ps1           # 위젯 본체
-├── setup.ps1               # 팀원 셋업 확인 스크립트
+├── setup.ps1               # 대화형 설치(차수 선택→점검→실행), -Check 로 점검만
+├── CLAUDE.md               # Claude Code용 설치 가이드 (에이전트가 자동 로드)
 ├── config/
 │   ├── qa_config_5차.json  # 5차 설정
 │   ├── qa_config_6차.json  # 6차 설정

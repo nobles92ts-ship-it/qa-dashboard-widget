@@ -1,5 +1,6 @@
 ﻿param(
-    [string]$ConfigFile = ""
+    [string]$ConfigFile = "",
+    [switch]$Check
 )
 
 $scriptRoot = $PSScriptRoot
@@ -7,8 +8,8 @@ $scriptsDir = Join-Path $scriptRoot "scripts"
 $credDir    = Join-Path $scriptRoot "credentials"
 $configDir  = Join-Path $scriptRoot "config"
 
-# ── 차수 선택 (파라미터 미지정 시 대화형) ──
-if (-not $ConfigFile) {
+# ── 차수 선택 (파라미터 미지정 시 대화형; -Check 모드는 질문 없이 건너뜀) ──
+if (-not $ConfigFile -and -not $Check) {
     $configs = @(Get-ChildItem $configDir -Filter "qa_config_*.json" |
         Where-Object { $_.BaseName -ne "qa_config_template" } | Sort-Object Name)
     if ($configs.Count -eq 0) {
@@ -33,12 +34,17 @@ if (-not $ConfigFile) {
     $ConfigFile = $configs[$idx - 1].Name
 }
 
-$configPath = Join-Path $configDir $ConfigFile
-$milestone  = ($ConfigFile -replace "^qa_config_", "") -replace "\.json$", ""
+if ($ConfigFile) {
+    $configPath = Join-Path $configDir $ConfigFile
+    $milestone  = ($ConfigFile -replace "^qa_config_", "") -replace "\.json$", ""
+} else {
+    $milestone  = ""
+}
+$headerLabel = if ($milestone) { "$milestone 위젯" } else { "환경 점검" }
 
 Write-Host ""
 Write-Host "================================================" -ForegroundColor Cyan
-Write-Host "  QA Dashboard 셋업 — $milestone 위젯" -ForegroundColor Cyan
+Write-Host "  QA Dashboard 셋업 — $headerLabel" -ForegroundColor Cyan
 Write-Host "================================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -123,53 +129,64 @@ if (Test-Path $jiraConfig) {
     $ok = $false
 }
 
-# config 로컬 경로 확인 (배포 버튼용 — 없어도 조회는 가능)
+# config 로컬 경로 확인 (차수를 지정/선택했을 때만 — 배포 버튼용)
 Write-Host ""
-Write-Host "[추가] $milestone config 로컬 경로 확인..." -ForegroundColor Cyan
-if (Test-Path $configPath) {
-    $cfg = Get-Content $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
-    $needsUpdate = $false
-    if ($cfg.deployDir -like "*YOUR_NAME*") {
-        Write-Host "      → config/$ConfigFile 의 deployDir 를 본인 경로로 수정하세요. (리포트 배포 시 필요)" -ForegroundColor Yellow
-        $needsUpdate = $true
-    }
-    if ($cfg.htmlTemplate -like "*YOUR_NAME*") {
-        Write-Host "      → config/$ConfigFile 의 htmlTemplate 를 본인 경로로 수정하세요. (리포트 배포 시 필요)" -ForegroundColor Yellow
-        $needsUpdate = $true
-    }
-    if (-not $needsUpdate) {
-        Write-Host "      경로 설정 OK" -ForegroundColor Green
+if ($ConfigFile) {
+    Write-Host "[추가] $milestone config 로컬 경로 확인..." -ForegroundColor Cyan
+    if (Test-Path $configPath) {
+        $cfg = Get-Content $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        $needsUpdate = $false
+        if ($cfg.deployDir -like "*YOUR_NAME*") {
+            Write-Host "      → config/$ConfigFile 의 deployDir 를 본인 경로로 수정하세요. (리포트 배포 시 필요)" -ForegroundColor Yellow
+            $needsUpdate = $true
+        }
+        if ($cfg.htmlTemplate -like "*YOUR_NAME*") {
+            Write-Host "      → config/$ConfigFile 의 htmlTemplate 를 본인 경로로 수정하세요. (리포트 배포 시 필요)" -ForegroundColor Yellow
+            $needsUpdate = $true
+        }
+        if (-not $needsUpdate) {
+            Write-Host "      경로 설정 OK" -ForegroundColor Green
+        }
     }
 }
 
 Write-Host ""
 Write-Host "================================================" -ForegroundColor Cyan
 if ($ok) {
-    Write-Host "  $milestone 설정 완료!" -ForegroundColor Green
-
-    # 바탕화면에 선택한 차수 바로가기 생성
-    $widgetFile = Join-Path $scriptRoot "qa-widget.ps1"
-    $desktop    = [Environment]::GetFolderPath("Desktop")
-    $shortcutPath = Join-Path $desktop "$milestone 위젯.lnk"
-    $ws = New-Object -ComObject WScript.Shell
-    $sc = $ws.CreateShortcut($shortcutPath)
-    $sc.TargetPath = "powershell.exe"
-    $sc.Arguments = "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$widgetFile`" -ConfigFile `"$ConfigFile`""
-    $sc.WorkingDirectory = $scriptRoot
-    $sc.Save()
-    Write-Host "  바탕화면에 '$milestone 위젯' 바로가기를 만들었습니다." -ForegroundColor Green
-    Write-Host ""
-
-    $run = Read-Host "지금 $milestone 위젯을 실행할까요? (Y/n)"
-    if ($run -ne "n" -and $run -ne "N") {
-        Start-Process "powershell" "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$widgetFile`" -ConfigFile `"$ConfigFile`""
-        Write-Host "  $milestone 위젯을 실행했습니다." -ForegroundColor Green
+    if ($Check) {
+        Write-Host "  [체크 통과] 필수 항목이 모두 준비되었습니다." -ForegroundColor Green
     } else {
-        Write-Host "  나중에 바탕화면의 '$milestone 위젯' 을 더블클릭하면 실행됩니다." -ForegroundColor White
+        Write-Host "  $milestone 설정 완료!" -ForegroundColor Green
+
+        # 바탕화면에 선택한 차수 바로가기 생성
+        $widgetFile = Join-Path $scriptRoot "qa-widget.ps1"
+        $desktop    = [Environment]::GetFolderPath("Desktop")
+        $shortcutPath = Join-Path $desktop "$milestone 위젯.lnk"
+        $ws = New-Object -ComObject WScript.Shell
+        $sc = $ws.CreateShortcut($shortcutPath)
+        $sc.TargetPath = "powershell.exe"
+        $sc.Arguments = "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$widgetFile`" -ConfigFile `"$ConfigFile`""
+        $sc.WorkingDirectory = $scriptRoot
+        $sc.Save()
+        Write-Host "  바탕화면에 '$milestone 위젯' 바로가기를 만들었습니다." -ForegroundColor Green
+        Write-Host ""
+
+        $run = Read-Host "지금 $milestone 위젯을 실행할까요? (Y/n)"
+        if ($run -ne "n" -and $run -ne "N") {
+            Start-Process "powershell" "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$widgetFile`" -ConfigFile `"$ConfigFile`""
+            Write-Host "  $milestone 위젯을 실행했습니다." -ForegroundColor Green
+        } else {
+            Write-Host "  나중에 바탕화면의 '$milestone 위젯' 을 더블클릭하면 실행됩니다." -ForegroundColor White
+        }
     }
 } else {
-    Write-Host "  위 항목을 해결한 뒤 다시 실행하세요 (선택한 차수: $milestone)." -ForegroundColor Yellow
-    Write-Host "  다시 실행: powershell -ExecutionPolicy Bypass -File setup.ps1" -ForegroundColor White
+    Write-Host "  위 항목을 해결한 뒤 다시 실행하세요." -ForegroundColor Yellow
+    if (-not $Check) {
+        Write-Host "  다시 실행: powershell -ExecutionPolicy Bypass -File setup.ps1" -ForegroundColor White
+    }
 }
 Write-Host "================================================" -ForegroundColor Cyan
 Write-Host ""
+
+# -Check 모드: 사람이 실행하는 흐름 없이 종료 코드만 반환 (0=통과, 1=실패)
+if ($Check) { exit ([int](-not $ok)) }
