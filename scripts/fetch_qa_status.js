@@ -88,11 +88,20 @@ const SPREADSHEET_ID = milestoneConfig?.spreadsheetId || '1-ICt7w5haohb4S1r3cwX7
 const STATUS_FILENAME = milestoneConfig?.statusFile || 'qa_status.json';
 const OUTPUT_PATH = path.join(__dirname, STATUS_FILENAME);
 
-// 대시보드, 템플릿 등 제외할 시트명
-const EXCLUDE = ['대시보드', '템플릿', 'Template', 'Sheet1',
+// 제외할 시트명: config의 excludeTabs 우선, 없으면 기본값 (하위 호환)
+const EXCLUDE = milestoneConfig?.excludeTabs || [
+  '대시보드', '템플릿', 'Template', 'Sheet1',
   '범위_발사체', 'Boss_0011+-',
   '필드_보스_시스템_개선', '즉시_이동_예외_처리', '공격_스킬_시전_이동_속도',
-  '사망_및_부활_시스템', '수영_시스템', '빌드_안정성'];
+  '사망_및_부활_시스템', '수영_시스템', '빌드_안정성',
+];
+
+// 통계에서 제외할 탭명 패턴(대소문자 무시 부분일치): config의 excludeTabPatterns 우선.
+// EXCLUDE(정확한 이름)와 달리 기능별 목록 + 대시보드 통합 집계 양쪽에서 빠진다.
+// 기본값 BVT — 차수가 늘어도 'BVT(Trunk)'·'BVT(M8)' 등이 자동으로 걸린다.
+const EXCLUDE_PATTERNS = milestoneConfig?.excludeTabPatterns || ['BVT'];
+const isExcludedByPattern = n =>
+  EXCLUDE_PATTERNS.some(p => n.toUpperCase().includes(p.toUpperCase()));
 
 async function fetchStatus() {
   const auth = await getAuthClient();
@@ -103,19 +112,38 @@ async function fetchStatus() {
   const tabNames = meta.data.sheets
     .filter(s => !s.properties.hidden)
     .map(s => s.properties.title)
-    .filter(n => !EXCLUDE.includes(n));
+    .filter(n => !EXCLUDE.includes(n) && !isExcludedByPattern(n));
 
   const result = { updated: new Date().toISOString(), sheets: [] };
   let totalPass = 0, totalFail = 0, totalBlock = 0, totalPending = 0, totalNA = 0, totalTC = 0;
 
-  // 2. 각 탭 데이터 읽기
-  for (const tab of tabNames) {
+  // 2. 모든 탭 데이터를 batchGet 1회 호출로 수집 (Quota 절약)
+  // 429(Quota) 시 지수 백오프 재시도
+  const ranges = tabNames.map(t => `'${t}'!A:J`);
+  async function batchGetWithRetry(maxAttempts = 5) {
+    let waitMs = 5000;
+    for (let i = 1; i <= maxAttempts; i++) {
+      try {
+        return await sheets.spreadsheets.values.batchGet({
+          spreadsheetId: SPREADSHEET_ID,
+          ranges,
+        });
+      } catch (e) {
+        const isQuota = (e.message || '').includes('Quota exceeded') || e.code === 429;
+        if (!isQuota || i === maxAttempts) throw e;
+        console.error(`[Quota] ${i}/${maxAttempts} 재시도 대기 ${waitMs / 1000}s...`);
+        await new Promise(r => setTimeout(r, waitMs));
+        waitMs = Math.min(waitMs * 2, 60000);
+      }
+    }
+  }
+  const batchRes = await batchGetWithRetry();
+  const valueRanges = batchRes.data.valueRanges || [];
+
+  for (let t = 0; t < tabNames.length; t++) {
+    const tab = tabNames[t];
     try {
-      const res = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `'${tab}'!A:J`,
-      });
-      const rows = res.data.values || [];
+      const rows = valueRanges[t]?.values || [];
       if (rows.length < 2) continue;
 
       // H열(PC결과), I열(모바일결과) 집계
@@ -184,27 +212,51 @@ async function fetchStatus() {
     }
   }
 
-  // 대시보드 탭에서 공식 집계값 직접 읽기 (C5:D9 = PASS/FAIL/BLOCK/미진행/N/A × PC/모바일)
+  // 대시보드 탭에서 공식 집계값 직접 읽기.
+  // 통합('구분' 첫 블록)은 BVT 포함 전체 합이므로, 같은 대시보드의 탭별 블록에서
+  // 패턴 제외 대상(BVT)을 읽어 차감한다 — 집계 기준(COUNTIF)이 동일해 통합과 정확히 상쇄된다.
+  // 레이아웃(update_dashboard.js / dashboard_builder.gs): A열='구분'인 행이 블록 헤더,
+  //   헤더행 C,E,G,… = 탭명(첫 블록은 '통합') / +1행 PC·모바일 / +2~+6행 PASS·FAIL·BLOCK·미진행·N/A
   const dashRes = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: '대시보드!C5:D9',
+    range: '대시보드!A:V',
   });
   const dashRows = dashRes.data.values || [];
   const toNum = v => parseInt((v || '0').toString().replace(/,/g, ''), 10) || 0;
-  const dashPC = {
-    PASS:    toNum(dashRows[0]?.[0]),
-    FAIL:    toNum(dashRows[1]?.[0]),
-    BLOCK:   toNum(dashRows[2]?.[0]),
-    pending: toNum(dashRows[3]?.[0]),
-    NA:      toNum(dashRows[4]?.[0]),
-  };
-  const dashMob = {
-    PASS:    toNum(dashRows[0]?.[1]),
-    FAIL:    toNum(dashRows[1]?.[1]),
-    BLOCK:   toNum(dashRows[2]?.[1]),
-    pending: toNum(dashRows[3]?.[1]),
-    NA:      toNum(dashRows[4]?.[1]),
-  };
+  const METRIC_KEYS = ['PASS', 'FAIL', 'BLOCK', 'pending', 'NA'];
+  const zeroCounts = () => ({ PASS: 0, FAIL: 0, BLOCK: 0, pending: 0, NA: 0 });
+
+  let totalPC = null, totalMob = null;
+  const cutPC = zeroCounts(), cutMob = zeroCounts();
+  const cutTabs = [];
+
+  for (let r = 0; r < dashRows.length; r++) {
+    if ((dashRows[r]?.[0] || '').toString().trim() !== '구분') continue;
+    for (let c = 2; c < dashRows[r].length; c += 2) {
+      const tab = (dashRows[r][c] || '').toString().trim();
+      if (!tab) continue;
+      const pcC = zeroCounts(), mobC = zeroCounts();
+      METRIC_KEYS.forEach((k, i) => {
+        pcC[k]  = toNum(dashRows[r + 2 + i]?.[c]);
+        mobC[k] = toNum(dashRows[r + 2 + i]?.[c + 1]);
+      });
+      if (tab === '통합') { totalPC = pcC; totalMob = mobC; }
+      else if (isExcludedByPattern(tab)) {
+        cutTabs.push(tab);
+        METRIC_KEYS.forEach(k => { cutPC[k] += pcC[k]; cutMob[k] += mobC[k]; });
+      }
+    }
+  }
+
+  // 파싱 실패 시 조용히 틀린 수치를 내보내지 않는다 (fail-closed).
+  if (!totalPC) throw new Error("대시보드에서 '통합' 블록을 찾지 못했습니다 (레이아웃 변경 확인 필요)");
+
+  const dashPC = zeroCounts(), dashMob = zeroCounts();
+  METRIC_KEYS.forEach(k => {
+    dashPC[k]  = totalPC[k]  - cutPC[k];
+    dashMob[k] = totalMob[k] - cutMob[k];
+  });
+  if (cutTabs.length) console.log(`통계 제외 탭 ${cutTabs.length}종: ${cutTabs.join(', ')}`);
   const dashPcTotal  = dashPC.PASS + dashPC.FAIL + dashPC.BLOCK + dashPC.pending + dashPC.NA;
   const dashPcTarget = dashPcTotal - dashPC.NA;
   const dashPcDone   = dashPC.PASS + dashPC.FAIL + dashPC.BLOCK;
