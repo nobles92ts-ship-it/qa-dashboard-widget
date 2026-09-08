@@ -8,5 +8,19 @@
   "slackChannel": "C0AH0FERQRY",
   "vercelScope": "nobles92ts-7686s-projects",
   "deployDir": "C:/Users/YOUR_NAME/Downloads/qa-report-deploy",
-  "htmlTemplate": "C:/Users/YOUR_NAME/Downloads/QA_결과서/QA_테스트_결과서_5차_template.html"
+  "htmlTemplate": "C:/Users/YOUR_NAME/Downloads/QA_결과서/QA_테스트_결과서_5차_template.html",
+  "excludeTabs": [
+    "대시보드",
+    "템플릿",
+    "Template",
+    "Sheet1",
+    "범위_발사체",
+    "Boss_0011+-",
+    "필드_보스_시스템_개선",
+    "즉시_이동_예외_처리",
+    "공격_스킬_시전_이동_속도",
+    "사망_및_부활_시스템",
+    "수영_시스템",
+    "빌드_안정성"
+  ]
 }

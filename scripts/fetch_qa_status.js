@@ -88,12 +88,12 @@ const SPREADSHEET_ID = milestoneConfig?.spreadsheetId || '1-ICt7w5haohb4S1r3cwX7
 const STATUS_FILENAME = milestoneConfig?.statusFile || 'qa_status.json';
 const OUTPUT_PATH = path.join(__dirname, STATUS_FILENAME);
 
-// 제외할 시트명: config의 excludeTabs 우선, 없으면 기본값 (하위 호환)
+// 제외할 시트명: config의 excludeTabs 우선, 없으면 기본값.
+// ⚠ 기본값에는 TC 탭 이름을 넣지 말 것 — 차수마다 같은 이름의 실제 기능 탭이 생기면
+//   그 차수에서 조용히 빠진다(6차 '수영_시스템'이 실제로 그랬다, 2026-09-08).
+//   차수 전용 제외는 해당 qa_config_N차.json의 excludeTabs에 적는다.
 const EXCLUDE = milestoneConfig?.excludeTabs || [
   '대시보드', '템플릿', 'Template', 'Sheet1',
-  '범위_발사체', 'Boss_0011+-',
-  '필드_보스_시스템_개선', '즉시_이동_예외_처리', '공격_스킬_시전_이동_속도',
-  '사망_및_부활_시스템', '수영_시스템', '빌드_안정성',
 ];
 
 // 통계에서 제외할 탭명 패턴(대소문자 무시 부분일치): config의 excludeTabPatterns 우선.
